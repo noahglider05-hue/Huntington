@@ -1,18 +1,11 @@
 import pandas as pd
 
 '''
-Linear model analysing simple major macro measurements
+Clean up CSV files and put them into a master set
 '''
 
-# file paths
-inflation = 'data/PCEPI.csv'
-gdp = 'data/GDP.csv'
-unemployment = 'data/UNRATE.csv'
-intrest_rates = 'data/FEDFUNDS.csv'
-oil_rates = 'data/MCOILWTICO.csv'
-
 def read_quarterly(csv_file):
-    '''Make monthly-quarterly adjustments'''
+    # Make monthly-quarterly adjustments
     df = pd.read_csv(csv_file)
 
     if 'observation_date' not in df.columns:
@@ -32,26 +25,18 @@ def read_quarterly(csv_file):
 
     return df_quarterly 
 
-# sloppy n lazy, fix later
-inflation = read_quarterly(inflation)
-gdp = read_quarterly(gdp)
-unemployment = read_quarterly(unemployment)
-intrest_rates = read_quarterly(intrest_rates)
-oil_rates = read_quarterly(oil_rates)
 
-data = inflation, gdp, unemployment, intrest_rates, oil_rates
+def master_table(data_paths):
+    # data is a list of file paths to CSVs
+    # putting them all togther into a combined csv with the same formatting
+    data_csv = [None]*len(data_paths)
+    for i, x in enumerate(data_paths):
+        data_csv[i] = read_quarterly(x)
 
-for x in data:
-    print(x.head())
+    master_table = data_csv[0]
 
-master_table = data[0]
+    for df in data_csv[1:]:
+        master_table = master_table.merge(df, on='observation_date', how='inner')
 
-for df in data[1:]:
-    master_table = master_table.merge(df, on='observation_date', how='inner')
-
-
-print(master_table.head())
-
-
-master_table.to_csv('master_macro_table.csv', index=False)
-master_table.to_excel('master_macro_table.xlsx', index=False)
+    master_table.to_csv('master_macro_table.csv', index=False)
+    master_table.to_excel('master_macro_table.xlsx', index=False)

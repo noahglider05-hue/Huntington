@@ -5,3 +5,9 @@
 - set up API calls for data
 
 - review stats, come up with a plan on what data is useful
+
+- Scrape ETF data
+
+- Sophisticate workflow
+    - Ensure master_table dates line up with the stock/ETF
+    - Organize folders, put spreadsheets in one area
