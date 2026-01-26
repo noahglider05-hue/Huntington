@@ -9,8 +9,8 @@ master_table['observation_date'] = pd.to_datetime(master_table['observation_date
 
 
 # Pick one column
-ticker = 'XLE'
-# stock = get_ticker(ticker) # use if the data set it not downloaded
+ticker = 'XLP'
+stock = get_ticker(ticker) # use if the data set it not downloaded
 
 stock = pd.read_csv(f'{ticker}_quarterly.csv')
 stock['observation_date'] = pd.to_datetime(stock['observation_date'])

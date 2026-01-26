@@ -1,12 +1,17 @@
-from data_cleanse import read_quarterly, master_table
+from overlapGraph import overlap_graph
+import pandas as pd
 
-# file paths
-inflation = 'data/PCEPI.csv'
-gdp = 'data/GDP.csv'
-unemployment = 'data/UNRATE.csv'
-intrest_rates = 'data/FEDFUNDS.csv'
-oil_rates = 'data/MCOILWTICO.csv'
+ETF = pd.read_csv('XLP_quarterly.csv')
+ETF['observation_date'] = pd.to_datetime(ETF['observation_date'])
+ETF.set_index('observation_date', inplace=True)
+ETF = ETF['Close']
 
-data = inflation, gdp, unemployment, intrest_rates, oil_rates
+# Just overlap it with all the macro data... duh
+MACRO = pd.read_csv('master_macro_table.csv')
+MACRO['observation_date'] = pd.to_datetime(MACRO['observation_date'])
+MACRO.set_index('observation_date', inplace = True)
+MACRO = MACRO['FEDFUNDS']
 
-master_table(data)
+
+overlap_graph(MACRO, ETF, "XLP", "FEDFUNDS")
+

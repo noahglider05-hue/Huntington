@@ -40,3 +40,17 @@ def master_table(data_paths):
 
     master_table.to_csv('master_macro_table.csv', index=False)
     master_table.to_excel('master_macro_table.xlsx', index=False)
+
+
+'''
+Example- 
+inflation = 'data/PCEPI.csv'
+gdp = 'data/GDP.csv'
+unemployment = 'data/UNRATE.csv'
+intrest_rates = 'data/FEDFUNDS.csv'
+oil_rates = 'data/MCOILWTICO.csv'
+
+data = inflation, gdp, unemployment, intrest_rates, oil_rates
+
+master_table(data)
+'''

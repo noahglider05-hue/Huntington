@@ -11,3 +11,5 @@
 - Sophisticate workflow
     - Ensure master_table dates line up with the stock/ETF
     - Organize folders, put spreadsheets in one area
+
+- https://fred.stlouisfed.org/series/SP500 
