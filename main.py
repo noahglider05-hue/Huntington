@@ -1,17 +1,23 @@
-from overlapGraph import overlap_graph
+from analysis import graph, correlation
 import pandas as pd
 
-ETF = pd.read_csv('XLP_quarterly.csv')
-ETF['observation_date'] = pd.to_datetime(ETF['observation_date'])
-ETF.set_index('observation_date', inplace=True)
+def fix_pd(csv_file):
+    ETF = pd.read_csv(csv_file)
+    ETF['observation_date'] = pd.to_datetime(ETF['observation_date'])
+    ETF.set_index('observation_date', inplace=True)
+    return ETF
+
+
+# Get data
+ETF = fix_pd('QQQ_quarterly.csv')
 ETF = ETF['Close']
+MACRO = fix_pd('master_macro_table.csv')
 
-# Just overlap it with all the macro data... duh
-MACRO = pd.read_csv('master_macro_table.csv')
-MACRO['observation_date'] = pd.to_datetime(MACRO['observation_date'])
-MACRO.set_index('observation_date', inplace = True)
-MACRO = MACRO['FEDFUNDS']
+# Analysis
+master_table = MACRO.merge(ETF, on='observation_date', how='left')
+correlation(master_table, 'XLP')
 
 
-overlap_graph(MACRO, ETF, "XLP", "FEDFUNDS")
+MACRO_specific = MACRO['FEDFUNDS']
+graph(MACRO_specific, ETF, "XLP", "FEDFUNDS")
 
