@@ -1,0 +1,44 @@
+
+MONTHLY
+    Mean Squared Error: 27.644870184488262
+    R² Score: 0.7440892168985276
+
+    Model Coefficients:
+    PCEPI         1.350365
+    GDP          -0.002223
+    UNRATE       -1.072531
+    FEDFUNDS     -0.004618
+    MCOILWTICO    0.097616
+
+MONTHLY shifted 3
+    Mean Squared Error: 24.11793881631736
+    R^2 Score: 0.7689747495973015
+    
+    Model Coefficients: 
+    PCEPI         1.619476
+    GDP          -0.002850
+    UNRATE       -0.663031
+    FEDFUNDS      0.343449
+    MCOILWTICO    0.064585
+
+Quarterly
+    Mean Squared Error: 41.41898727917443
+    R² Score: 0.5833679189717241
+
+    Model Coefficients:
+    PCEPI         2.310941
+    GDP          -0.004864
+    UNRATE       -1.647704
+    FEDFUNDS      0.067995
+    MCOILWTICO    0.075104
+
+Quarterly shifted 1
+    Mean Squared Error: 49.072010533968665
+    R^2 Score: 0.5063864374277296
+    
+    Model Coefficients: 
+    PCEPI         3.345611
+    GDP          -0.007440
+    UNRATE       -1.422212
+    FEDFUNDS      0.614380
+    MCOILWTICO    0.006813

@@ -7,11 +7,14 @@ def fix_pd(csv_file):
     ETF.set_index('observation_date', inplace=True)
     return ETF
 
-
 # Get data
-ETF = fix_pd('data/cleanedData/QQQ_quarterly.csv')
+ETF = fix_pd('data/cleanedData/XLE_quarterly.csv')
 ETF = ETF['Close']
 MACRO = fix_pd('data/cleanedData/master_macro_table.csv')
+
+master_table = MACRO.merge(ETF, on='observation_date', how='left')
+
+print(master_table.head)
 
 # Analysis
 
@@ -20,10 +23,9 @@ MACRO = fix_pd('data/cleanedData/master_macro_table.csv')
 #   Two, measure correlations, lots of them
 #   Three, graphs
 #   Four time series
-master_table = MACRO.merge(ETF, on='observation_date', how='left')
-correlation(master_table, 'XLP')
+correlation(master_table, 'XLE')
 
 
-MACRO_specific = MACRO['FEDFUNDS']
-graph(MACRO_specific, ETF, "XLP", "FEDFUNDS")
+MACRO_specific = MACRO['PCEPI']
+graph(MACRO_specific, ETF, "XLE", "PCEPI")
 

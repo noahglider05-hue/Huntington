@@ -4,7 +4,6 @@ Research papers
 
 
 Existing models
-    SEAF model, https://www.asburyresearch.com/
     Sector rotational model, https://en.wikipedia.org/wiki/Sector_rotation
     https://macrosynergy.com/research/macro-factors-and-sectoral-equity-allocation/
 
@@ -26,4 +25,12 @@ Global Industry Classification Standard (GICS)
 
 25 industry groups of the S&P sectors- https://en.wikipedia.org/wikiGlobal_Industry_Classification_Standard
 
+Business cycle- https://learn.g2.com/business-cycle-stages#what-factors-influence-the-business-cycle
+    Peak, recession, trough, recovery, Epansion. How to know what stage we are in? Incororate this into the algorithm
 
+Sector based strategy- https://www.ssga.com/us/en/intermediary/insights/four-reasons-to-implement-a-sector-strategy
+    - Less risk comapred to individual stocks
+    - Predictable movements based on macro data
+
+
+Macro + business cycle + Math = sector prediction

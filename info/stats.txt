@@ -1,0 +1,4 @@
+MSE- mean squared error measures the average difference between the predicted and actual values
+R2- coefficient determination measures how much variation in the target variable (in our case ETF prices) is 
+    explained by the model. 1 is a perfect fit and 0 means no explanation. So for Monthly measurements and three
+    month lag, our variables account for 76% of the variation

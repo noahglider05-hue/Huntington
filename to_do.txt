@@ -1,9 +1,1 @@
-- set up API calls for data -> FRED has some but also databento credits
-
-- review stats, come up with a plan on what data is useful, really look at the graphs and describe what they could mean
-
-- Sophisticate workflow
-    - Ensure master_table dates line up with the stock/ETF
-    - Organize folders, put spreadsheets in one area
-
-- https://fred.stlouisfed.org/series/SP500 
+use pct change in linear regression

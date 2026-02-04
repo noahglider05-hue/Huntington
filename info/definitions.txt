@@ -10,3 +10,5 @@ Shock scenarios: A sudden, unexpected macro scale disruption. Often used to stre
     Sudden intrest rate changes
     Employment shock
     -> Sector specific shock (us)
+
+
