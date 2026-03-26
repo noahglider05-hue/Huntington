@@ -1,91 +1,106 @@
-import seaborn as sns
+import pandas as pd
+import yfinance as yf
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+import statsmodels.api as sm
+from statsmodels.tsa.arima.model import ARIMA
 import matplotlib.pyplot as plt
-import pandas as pd 
+import matplotlib.dates as mdates
+import seaborn as sns
 
-def correlation(master_df: pd.DataFrame):
-    '''
-    Finds correlation between specific ETF and macro data; 5 year chunks
-    '''
-    etf_col = master_df['Close']
-    
-    five_year_periods = [
-        {"period": "2000-2004", "start": "2000-01-01", "end": "2004-12-31"},
-        {"period": "2005-2009", "start": "2005-01-01", "end": "2009-12-31"},
-        {"period": "2010-2014", "start": "2010-01-01", "end": "2014-12-31"},
-        {"period": "2015-2019", "start": "2015-01-01", "end": "2019-12-31"},
-        {"period": "2020-2025", "start": "2020-01-01", "end": "2025-12-31"},
-    ]
+print("Loading local CSV files...")
 
-    # All columns except ETF = macro variables
-    macro_cols = [col for col in master_df.columns if col != etf_col]
+def load_fred_csv(filepath, val_col_name):
+    df = pd.read_csv(filepath)
+    df.rename(columns={df.columns[0]: 'DATE', df.columns[1]: val_col_name}, inplace=True)
+    df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+    df = df.dropna(subset=['DATE'])
+    df[val_col_name] = pd.to_numeric(df[val_col_name], errors='coerce')
+    return df.set_index('DATE')
 
-    for period in five_year_periods:
-        # Slice the dataframe for the period
-        window = master_df.loc[period["start"]:period["end"]]
+pcepi = load_fred_csv('PCEPI.csv', 'PCEPI')
+gdp = load_fred_csv('GDP.csv', 'GDP')
+unrate = load_fred_csv('UNRATE.csv', 'UNRATE')
+fedfunds = load_fred_csv('FEDFUNDS.csv', 'FEDFUNDS')
+oil = load_fred_csv('MCOILWTICO.csv', 'MCOILWTICO') 
 
-        if window.empty:
-            continue
+print("Fetching XLE data via Yahoo Finance API...")
+ticker_data = yf.download('XLE', start='2000-01-01', end='2025-01-01')
 
-        # Compute correlation: macro vs ETF
-        corr_series = window[macro_cols].corrwith(window[etf_col])
-        corr_df = corr_series.to_frame(name="Correlation")
+if isinstance(ticker_data.columns, pd.MultiIndex):
+    ticker_data.columns = ticker_data.columns.get_level_values(0)
 
-        # Plot heatmap
-        plt.figure(figsize=(6, max(4, len(macro_cols) * 0.35)))
-        sns.heatmap(
-            corr_df,
-            annot=True,
-            fmt=".2f",
-            cmap="Greens",
-            center=0,
-            linewidths=0.5
-        )
+target = ticker_data[['Close']].copy()
+target.columns = ['XLE'] 
+target = target.resample('MS').last()
 
-        plt.title(f"{etf_col} vs Macros Correlation ({period['label']})")
-        plt.tight_layout()
-        plt.savefig(f"plots/{etf_col}_correlation_{period['label']}.png")
-        plt.show()
+print("Merging data...")
+df = target.join([pcepi, gdp, unrate, fedfunds, oil], how='outer')
+df = df.resample('MS').ffill().dropna()
+df = df.loc['2000-01-01':'2025-01-01']
 
-# def graph(MACRO, ETF,  ETF_name, MACRO_name):
-#     '''
-#         MACRO- the macro df, typically from master_macro_table.csv
-#         ETF- ETF df
-#         ETF_name- string you want displayed, ticker will do
-#         MACRO_name- string you want displayed for macro measurement
+df.columns = df.columns.astype(str)
 
-#         problems: units, not every macro is the same
-#     '''
-#     # Put into one table
-#     data = pd.concat([ETF, MACRO], axis=1)
-#     data.columns = [f'{ETF_name}', f'{MACRO_name}']
+print("Running PCA...")
+scaler = StandardScaler()
+df_scaled = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df.index)
 
-#     # visualize
-#     fig, ax1 = plt.subplots(figsize=(10, 5))
-#     ax1.plot(data.index, data[f'{ETF_name}'], color='tab:blue', label=f'{ETF_name}')
-#     ax1.set_ylabel(f'{ETF_name} Price', color='tab:blue')
-#     ax1.tick_params(axis='y', labelcolor='tab:blue')
+pca = PCA(n_components=1)
+df_scaled['ECON_TREND_PC1'] = pca.fit_transform(df_scaled[['GDP', 'PCEPI']])
 
-#     ax2 = ax1.twinx()
-#     ax2.plot(data.index, data[f'{MACRO_name}'], color='tab:red', label=f'{MACRO_name}')
-#     ax2.set_ylabel(f'{MACRO_name} Price', color='tab:red')
-#     ax2.tick_params(axis='y', labelcolor='tab:red')
+features = ['ECON_TREND_PC1', 'UNRATE', 'FEDFUNDS', 'MCOILWTICO'] 
 
-#     plt.title(f'Quarterly Closing Prices: {ETF_name} vs {MACRO_name}')
-#     fig.tight_layout()
-#     plt.savefig(f'plots/{ETF_name}_vs_{MACRO_name}.png')
-#     plt.show()
+df_lagged = df_scaled.copy()
+df_lagged[features] = df_lagged[features].shift(1)
+df_lagged = df_lagged.dropna()
 
-'''
-ETF = fix_pd('data/cleanedData/XLE_quarterly.csv')
-ETF = ETF['Close']
-MACRO = fix_pd('monthly_master_macro_table.csv')
+df_model = pd.concat([df_lagged['XLE'], df_lagged[features]], axis=1)
 
-master_table = MACRO.merge(ETF, on='observation_date', how='left')
+print("Performing Train/Test Split (Time Series: 80% Train, 20% Test)...")
+split_idx = int(len(df_model) * 0.8)
+df_train = df_model.iloc[:split_idx]
+df_test = df_model.iloc[split_idx:]
 
-print(master_table.head)
+print("Training ARIMAX(1, 1, 1) Model on Training Data...")
+model = ARIMA(endog=df_train['XLE'], exog=df_train[features], order=(1, 1, 1))
+fitted_model = model.fit()
 
-correlation(master_table, 'XLE')
+print("\n" + "="*80)
+print("ARIMA REGRESSION SUMMARY (TRAIN)")
+print("="*80)
+print(fitted_model.summary())
 
-MACRO_specific = MACRO['PCEPI']
-graph(MACRO_specific, ETF, "XLE", "PCEPI")
-'''
+y_train_pred = fitted_model.predict(start=df_train.index[0], end=df_train.index[-1], exog=df_train[features])
+y_test_pred = fitted_model.predict(start=df_test.index[0], end=df_test.index[-1], exog=df_test[features])
+
+train_r2 = r2_score(df_train['XLE'], y_train_pred)
+test_r2 = r2_score(df_test['XLE'], y_test_pred)
+
+print("Generating final graph...")
+sns.set_theme(style="whitegrid")
+plt.figure(figsize=(14, 7))
+
+plt.plot(df_model.index, df_model['XLE'], color='#333333', linewidth=2.5, alpha=0.8, label='Actual XLE (Scaled)')
+
+plt.plot(df_train.index, y_train_pred, color='#FF5733', linewidth=2, linestyle='--', label=f'Train Prediction (R²: {train_r2:.2f})')
+plt.plot(df_test.index, y_test_pred, color='#0078D7', linewidth=2, linestyle='--', label=f'Test Prediction (R²: {test_r2:.2f})')
+
+split_date = df_model.index[split_idx]
+plt.axvline(x=split_date, color='black', linestyle=':', linewidth=2, label='Train/Test Split')
+
+plt.title('Real Data: XLE Price Prediction ARIMAX Model (Train/Test Split)', fontsize=16, fontweight='bold')
+plt.ylabel('Price Momentum (Standardized)', fontsize=12)
+plt.xlabel('Year', fontsize=12)
+plt.legend(loc='upper left', fontsize=11, frameon=True)
+
+plt.axvspan(pd.to_datetime('2008-01-01'), pd.to_datetime('2009-06-01'), color='grey', alpha=0.2, label='Recession (2008)')
+plt.axvspan(pd.to_datetime('2020-03-01'), pd.to_datetime('2020-06-01'), color='grey', alpha=0.2, label='COVID-19')
+
+plt.gca().xaxis.set_major_locator(mdates.YearLocator(2))
+plt.gcf().autofmt_xdate()
+
+plt.savefig('xle_arima_traintest.png', dpi=300)
+print("Done. Graph saved to 'xle_arima_traintest.png'")
+git add .
+git commit -m "Add ARIMAX model analysis and train/test split graph"
